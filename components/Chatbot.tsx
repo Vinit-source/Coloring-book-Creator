@@ -4,6 +4,7 @@ import { CloseIcon } from './icons/CloseIcon';
 import { SendIcon } from './icons/SendIcon';
 import { getChatResponse } from '../services/geminiService';
 import { ChatMessage } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ChatbotProps {
     sessionId: string;
@@ -11,12 +12,18 @@ interface ChatbotProps {
 
 const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        { id: 'initial', role: 'bot', text: "Hi! I'm your friendly coloring assistant. Ask me anything!" }
-    ]);
+    const { t, languages, selectedLanguage } = useLanguage();
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Effect to update the initial message when the language changes
+    useEffect(() => {
+        setMessages([{ id: 'initial', role: 'bot', text: t('chatbotGreeting') }]);
+    }, [t]);
+
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,7 +40,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
         setIsTyping(true);
 
         try {
-            const botResponseText = await getChatResponse(sessionId, inputValue);
+            const currentLanguageName = languages.find(lang => lang.code === selectedLanguage)?.name || 'English';
+            const botResponseText = await getChatResponse(sessionId, inputValue, currentLanguageName);
             const botMessage: ChatMessage = { id: (Date.now() + 1).toString(), role: 'bot', text: botResponseText };
             setMessages(prev => [...prev, botMessage]);
         } catch (error: any) {
@@ -57,7 +65,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
             {isOpen && (
                 <div className="fixed bottom-24 right-6 w-full max-w-sm h-[60vh] bg-white rounded-2xl shadow-2xl flex flex-col z-40 overflow-hidden border">
                     <header className="bg-blue-600 text-white p-4 font-bold text-lg">
-                        Coloring Assistant
+                        {t('chatbotHeader')}
                     </header>
                     <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
                         {messages.map((msg) => (
@@ -87,7 +95,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                placeholder="Ask a question..."
+                                placeholder={t('chatbotPlaceholder')}
                                 className="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             />
                             <button onClick={handleSendMessage} disabled={isTyping} className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 disabled:bg-blue-300 transition">

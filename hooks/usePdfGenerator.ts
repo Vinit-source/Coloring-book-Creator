@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
+import { notoSansBase64 } from '../assets/notoFont';
 
 // Since we are loading jsPDF via a script tag, we need to declare it for TypeScript
 declare const jspdf: any;
 
 export const usePdfGenerator = () => {
-    const downloadPdf = useCallback((images: string[], theme: string, childName: string) => {
+    const downloadPdf = useCallback((images: string[], theme: string, childName: string, coverTitle: string, coverByline: string) => {
         if (!images || images.length === 0) {
             console.error("No images provided to generate PDF.");
             return;
@@ -17,6 +18,11 @@ export const usePdfGenerator = () => {
             format: 'a4'
         });
 
+        // --- Add custom font for Unicode support ---
+        doc.addFileToVFS('NotoSans-Regular.ttf', notoSansBase64);
+        doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+        doc.setFont('NotoSans');
+
         // --- Cover Page ---
         const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -24,21 +30,21 @@ export const usePdfGenerator = () => {
         doc.setFillColor(240, 249, 255); // A light blue background
         doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('NotoSans', 'normal'); // Use the custom font
+
         doc.setFontSize(28);
         doc.setTextColor(25, 25, 112); // Midnight blue
-        doc.text(`${childName}'s`, pageWidth / 2, pageHeight / 2 - 20, { align: 'center' });
+        doc.text(coverTitle.replace('{name}', childName), pageWidth / 2, pageHeight / 2 - 20, { align: 'center' });
         
         doc.setFontSize(36);
         doc.setTextColor(255, 105, 180); // Hot pink
         const themeTitle = theme.charAt(0).toUpperCase() + theme.slice(1);
-        doc.text(`${themeTitle}`, pageWidth / 2, pageHeight / 2, { align: 'center' });
+        doc.text(themeTitle, pageWidth / 2, pageHeight / 2, { align: 'center' });
         
         doc.setFontSize(28);
         doc.setTextColor(25, 25, 112); // Midnight blue
-        doc.text(`Coloring Book!`, pageWidth / 2, pageHeight / 2 + 20, { align: 'center' });
+        doc.text(coverByline, pageWidth / 2, pageHeight / 2 + 20, { align: 'center' });
 
-        doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         doc.setTextColor(100, 100, 100);
         doc.text('Generated with AI Coloring Book Creator', pageWidth / 2, pageHeight - 10, { align: 'center' });
