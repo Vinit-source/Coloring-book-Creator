@@ -4,10 +4,13 @@ import GeneratedPages from './components/GeneratedPages';
 import LoadingSpinner from './components/LoadingSpinner';
 import Chatbot from './components/Chatbot';
 import UpgradeModal from './components/UpgradeModal';
-import LanguageSelector from './components/LanguageSelector';
+import ApiKeyModal from './components/ApiKeyModal';
+import SettingsModal from './components/SettingsModal';
+import { SettingsIcon } from './components/icons/SettingsIcon';
 import { generateColoringPages } from './services/geminiService';
 import * as usageTracker from './utils/usageTracker';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { ApiKeyProvider, useApiKey } from './contexts/ApiKeyContext';
 
 
 const AppContent: React.FC = () => {
@@ -18,7 +21,10 @@ const AppContent: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [appState, setAppState] = useState<'form' | 'loading' | 'results'>('form');
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
     const { selectedLanguage, languages, t } = useLanguage();
+    const { apiKey, isKeySet } = useApiKey();
     
     // Generate a unique session ID for the chatbot
     const sessionId = useMemo(() => Date.now().toString(), []);
@@ -27,6 +33,11 @@ const AppContent: React.FC = () => {
     const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_7sI5lQ0fM2u3eLCcMM';
 
     const handleFormSubmit = async (newTheme: string, newName: string) => {
+        if (!apiKey) {
+            setError(t('apiKeyError'));
+            return;
+        }
+
         // Check usage limit before starting generation
         if (usageTracker.hasReachedLimit()) {
             if (usageTracker.isSubscribed()) {
@@ -45,7 +56,7 @@ const AppContent: React.FC = () => {
 
         try {
             const currentLanguageName = languages.find(lang => lang.code === selectedLanguage)?.name || 'English';
-            const images = await generateColoringPages(newTheme, currentLanguageName);
+            const images = await generateColoringPages(newTheme, currentLanguageName, apiKey);
             setGeneratedImages(images);
             // Increment usage count after successful generation
             usageTracker.incrementUsageCount(images.length);
@@ -98,9 +109,16 @@ const AppContent: React.FC = () => {
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 font-sans flex items-center justify-center p-4 relative">
+            <ApiKeyModal isOpen={!isKeySet} />
             <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.07%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50"></div>
             <header className="absolute top-4 right-4 z-20">
-                <LanguageSelector />
+                 <button 
+                  onClick={() => setIsSettingsModalOpen(true)} 
+                  className="p-2 bg-white/70 backdrop-blur-sm rounded-full text-gray-600 hover:text-blue-600 transition"
+                  aria-label={t('settingsButtonLabel')}
+                >
+                    <SettingsIcon className="w-6 h-6" />
+                </button>
             </header>
             <main className="z-10 w-full">
                 <div className="flex flex-col items-center">
@@ -113,13 +131,19 @@ const AppContent: React.FC = () => {
                 onClose={() => setIsUpgradeModalOpen(false)}
                 onUpgrade={handleUpgrade}
             />
+            <SettingsModal
+                isOpen={isSettingsModalOpen}
+                onClose={() => setIsSettingsModalOpen(false)}
+            />
         </div>
     );
 }
 
 const App: React.FC = () => (
     <LanguageProvider>
-        <AppContent />
+        <ApiKeyProvider>
+            <AppContent />
+        </ApiKeyProvider>
     </LanguageProvider>
 );
 

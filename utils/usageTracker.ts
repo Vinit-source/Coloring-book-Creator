@@ -1,7 +1,7 @@
 // A simple client-side usage tracker using localStorage.
 // In a production app, this would be handled by a secure backend and user authentication.
 
-const FREE_TIER_LIMIT = 10; // 2 books (5 pages each)
+const FREE_TIER_LIMIT = 5; // 1 book (5 pages each)
 const PAID_TIER_LIMIT = 400;
 const USAGE_COUNT_KEY = 'coloringBookUsageCount';
 const PLAN_KEY = 'coloringBookPlan';

@@ -1,24 +1,34 @@
 // Fix: Corrected the import path for GoogleGenAI and Type.
-import { GoogleGenAI, Type } from "@google/genai";
-import { Chat } from "@google/genai";
+import { GoogleGenAI, Type, Chat } from "@google/genai";
 
-// Ensure the API key is available
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable is not set");
+let ai: GoogleGenAI | null = null;
+let currentApiKey: string | null = null;
+let chatSessions: { [key: string]: Chat } = {};
+
+function getAiClient(apiKey: string): GoogleGenAI {
+    if (!apiKey) {
+        throw new Error("API Key is not provided.");
+    }
+    // If a client doesn't exist, or if the API key has changed, create a new instance.
+    if (!ai || currentApiKey !== apiKey) {
+        ai = new GoogleGenAI({ apiKey });
+        currentApiKey = apiKey;
+        // Resetting chat sessions is crucial when the key changes.
+        chatSessions = {};
+    }
+    return ai;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-const chatSessions: { [key: string]: Chat } = {};
 
 /**
  * Generates 5 distinct coloring page images based on a theme and language.
  * It first generates ideas in the specified language and then creates an image for each idea.
  */
-export const generateColoringPages = async (theme: string, languageName: string): Promise<string[]> => {
+export const generateColoringPages = async (theme: string, languageName: string, apiKey: string): Promise<string[]> => {
     try {
+        const aiClient = getAiClient(apiKey);
         // Step 1: Generate 5 distinct ideas for coloring pages based on the theme.
-        const ideaGenerationResponse = await ai.models.generateContent({
+        const ideaGenerationResponse = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `List exactly 5 simple, distinct, and creative scenes for a children's coloring book based on the theme "${theme}". Each scene should be a short descriptive phrase. Please provide the list in ${languageName}.`,
             config: {
@@ -51,7 +61,7 @@ export const generateColoringPages = async (theme: string, languageName: string)
             // but the 'scene' variable will contain the description in the user's chosen language.
             const prompt = `A children's coloring book page of ${scene}. It should be simple black and white line art, with thick, bold outlines, no shading, and no gray areas. The style must be clean, charming, and very easy for a young child to color. White background.`;
             
-            return ai.models.generateImages({
+            return aiClient.models.generateImages({
                 model: 'imagen-4.0-generate-001',
                 prompt: prompt,
                 config: {
@@ -73,6 +83,9 @@ export const generateColoringPages = async (theme: string, languageName: string)
 
     } catch (error) {
         console.error("Error generating coloring pages:", error);
+        if (error instanceof Error && error.message.includes('API key not valid')) {
+            throw new Error("Your API Key is not valid. Please check it in the settings.");
+        }
         throw new Error("Failed to generate coloring book. Please try again.");
     }
 };
@@ -80,11 +93,12 @@ export const generateColoringPages = async (theme: string, languageName: string)
 /**
  * Gets a response from the Gemini chat model in a specific language.
  */
-export const getChatResponse = async (sessionId: string, message: string, languageName: string): Promise<string> => {
+export const getChatResponse = async (sessionId: string, message: string, languageName: string, apiKey: string): Promise<string> => {
     try {
+        const aiClient = getAiClient(apiKey);
         const sessionKey = `${sessionId}-${languageName}`;
         if (!chatSessions[sessionKey]) {
-            chatSessions[sessionKey] = ai.chats.create({
+            chatSessions[sessionKey] = aiClient.chats.create({
                 model: 'gemini-2.5-flash',
                 config: {
                     systemInstruction: `You are a friendly and helpful assistant for parents and kids using a coloring book app. Keep your answers concise and cheerful. Please respond ONLY in ${languageName}.`,
@@ -97,6 +111,9 @@ export const getChatResponse = async (sessionId: string, message: string, langua
         return result.text;
     } catch (error) {
         console.error("Error getting chat response:", error);
+        if (error instanceof Error && error.message.includes('API key not valid')) {
+            return "It seems there's an issue with the API key. Please ask the adult to check it in the settings.";
+        }
         throw new Error("I'm having a little trouble thinking right now. Please try again in a moment!");
     }
 };

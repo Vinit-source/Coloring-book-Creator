@@ -5,6 +5,7 @@ import { SendIcon } from './icons/SendIcon';
 import { getChatResponse } from '../services/geminiService';
 import { ChatMessage } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 interface ChatbotProps {
     sessionId: string;
@@ -13,6 +14,7 @@ interface ChatbotProps {
 const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { t, languages, selectedLanguage } = useLanguage();
+    const { apiKey } = useApiKey();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     
     const [inputValue, setInputValue] = useState('');
@@ -32,7 +34,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
     useEffect(scrollToBottom, [messages]);
 
     const handleSendMessage = async () => {
-        if (inputValue.trim() === '') return;
+        if (inputValue.trim() === '' || !apiKey) return;
 
         const userMessage: ChatMessage = { id: Date.now().toString(), role: 'user', text: inputValue };
         setMessages(prev => [...prev, userMessage]);
@@ -41,7 +43,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ sessionId }) => {
 
         try {
             const currentLanguageName = languages.find(lang => lang.code === selectedLanguage)?.name || 'English';
-            const botResponseText = await getChatResponse(sessionId, inputValue, currentLanguageName);
+            const botResponseText = await getChatResponse(sessionId, inputValue, currentLanguageName, apiKey);
             const botMessage: ChatMessage = { id: (Date.now() + 1).toString(), role: 'bot', text: botResponseText };
             setMessages(prev => [...prev, botMessage]);
         } catch (error: any) {
