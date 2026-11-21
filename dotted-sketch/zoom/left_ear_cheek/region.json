@@ -1,0 +1,30 @@
+{
+  "name": "left_ear_cheek",
+  "zoom": 4,
+  "crop_orig": [
+    130,
+    320,
+    310,
+    550
+  ],
+  "owned_orig": [
+    [
+      0,
+      340,
+      290,
+      395
+    ],
+    [
+      0,
+      395,
+      230,
+      530
+    ]
+  ],
+  "crop_size": [
+    720,
+    920
+  ],
+  "stroke_px": 3,
+  "dot_spacing_crop_px": 18.0
+}

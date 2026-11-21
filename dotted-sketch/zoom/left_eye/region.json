@@ -1,0 +1,24 @@
+{
+  "name": "left_eye",
+  "zoom": 4,
+  "crop_orig": [
+    140,
+    212,
+    372,
+    360
+  ],
+  "owned_orig": [
+    [
+      0,
+      232,
+      352,
+      340
+    ]
+  ],
+  "crop_size": [
+    928,
+    592
+  ],
+  "stroke_px": 3,
+  "dot_spacing_crop_px": 18.0
+}

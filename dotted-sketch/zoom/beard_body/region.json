@@ -1,0 +1,24 @@
+{
+  "name": "beard_body",
+  "zoom": 2,
+  "crop_orig": [
+    0,
+    510,
+    798,
+    708
+  ],
+  "owned_orig": [
+    [
+      0,
+      530,
+      798,
+      708
+    ]
+  ],
+  "crop_size": [
+    1596,
+    396
+  ],
+  "stroke_px": 3,
+  "dot_spacing_crop_px": 9.0
+}

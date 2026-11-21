@@ -1,0 +1,24 @@
+{
+  "name": "mouth",
+  "zoom": 4,
+  "crop_orig": [
+    210,
+    375,
+    590,
+    550
+  ],
+  "owned_orig": [
+    [
+      230,
+      395,
+      570,
+      530
+    ]
+  ],
+  "crop_size": [
+    1520,
+    700
+  ],
+  "stroke_px": 3,
+  "dot_spacing_crop_px": 18.0
+}

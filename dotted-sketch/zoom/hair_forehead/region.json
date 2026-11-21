@@ -1,0 +1,24 @@
+{
+  "name": "hair_forehead",
+  "zoom": 3,
+  "crop_orig": [
+    140,
+    0,
+    660,
+    252
+  ],
+  "owned_orig": [
+    [
+      0,
+      0,
+      798,
+      232
+    ]
+  ],
+  "crop_size": [
+    1560,
+    756
+  ],
+  "stroke_px": 3,
+  "dot_spacing_crop_px": 13.5
+}
